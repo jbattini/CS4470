@@ -54,7 +54,6 @@ public class Chat {
 			}
             break;
         case "list":  
-        	System.out.println("speak to server to get list");
         	client.speakToServer();
                  break;
         case "6":  ;
