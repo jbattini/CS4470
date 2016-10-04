@@ -8,42 +8,79 @@ public class Server extends Thread {
 	
    private static ServerSocket serverSocket;
    private static ArrayList<Socket> clients;
+   private boolean listenForConnections;
+   private boolean listenToClients;
+   private DataInputStream  in   = null;
+   private DataOutputStream out = null;
    
    
    public Server(int port) throws IOException {
       serverSocket = new ServerSocket(port);
       clients = new ArrayList<Socket>();
+      listenForConnections = true;
+      listenToClients = false;
       //serverSocket.setSoTimeout(10000);
    }
 
    public void run() {
       while(true) {
-         try {
-            System.out.println("Waiting for client on host "+ this.getMyIP() +" on port " + 
-               serverSocket.getLocalPort() + "...");
-            
-            Socket clientSocket = serverSocket.accept();
-            clients.add(clientSocket);
-                 
-            System.out.println("Just connected to " + clientSocket.getRemoteSocketAddress());
-            DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-            
-            System.out.println(in.readUTF());
-            DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
-            out.writeUTF("Thank you for connecting to " + clientSocket.getLocalSocketAddress());
-            
-         }catch(SocketTimeoutException s) {
-        	 System.out.println("Socket timed out!");
-        	 break;
-         }catch(SocketException se) {
-        	 System.out.println("Server Socket Closed");
-        	 
-             se.printStackTrace();
-             break;
-         }catch(IOException e) {
-        	 e.printStackTrace();
-        	 break;
-         } 
+    	 if (listenForConnections){
+				try {
+					System.out.println("Waiting for client on host " + this.getMyIP() + " on port "
+							+ serverSocket.getLocalPort() + "...");
+
+					Socket clientSocket = serverSocket.accept();
+					clients.add(clientSocket);
+
+					System.out.println("Just connected to " + clientSocket.getRemoteSocketAddress());
+					in = new DataInputStream(clientSocket.getInputStream());
+
+					System.out.println(in.readUTF());
+					out = new DataOutputStream(clientSocket.getOutputStream());
+					out.writeUTF("Thank you for connecting to " + clientSocket.getLocalSocketAddress());
+					if (clients.size() > 2) {
+						listenForConnections = false;
+						listenToClients = true;
+					}
+					
+				} catch (SocketTimeoutException s) {
+					System.out.println("Socket timed out!");
+					break;
+				} catch (SocketException se) {
+					System.out.println("Server Socket Closed");
+
+					se.printStackTrace();
+					break;
+				} catch (IOException e) {
+					e.printStackTrace();
+					break;
+				} 
+    	 }
+    	 if(listenToClients){
+    		 for(int i = 0; i < clients.size(); i++){
+    			 
+				try {
+					if (clients.get(i).getInputStream().available() != 0){
+						DataInputStream in = new DataInputStream(clients.get(i).getInputStream());
+						
+						String inUTF = in.readUTF();
+						if (inUTF.equals("list")){
+							System.out.println("GETTING LIST FROM SERVER");
+							out = new DataOutputStream(clients.get(i).getOutputStream());
+							out.writeUTF("THIS IS THE LIST FROM SERVER");
+							System.out.println("THIS IS THE LIST FROM SERVER");
+					        out.flush();
+						}
+					} 
+					
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+    		 } 
+    	 }
+    	 
+    	 
       }
    }
    

@@ -39,13 +39,17 @@ public class Client extends Thread {
 	         e.printStackTrace();
 	      } 
 		
+		start();
+		
 	}
 	
 	
 	public void run() {  
 		while (true) {  
 		   try {  
-	    	  System.out.println(in.readUTF());
+			   InputStream inFromServer = socket.getInputStream();
+		       in = new DataInputStream(inFromServer);
+		       System.out.println("Server says " + in.readUTF());
 	         }
 	         catch(IOException ioe)
 	         {  System.out.println("Listening error: " + ioe.getMessage());
@@ -56,14 +60,14 @@ public class Client extends Thread {
 	
 	public void speakToServer(){
 		try {
-			OutputStream outToServer = socket.getOutputStream();
-			out = new DataOutputStream(outToServer);
-	        out.writeUTF("Hello from " + socket.getLocalSocketAddress());
+			System.out.println("CLIENT SPEAK TO SERVER");
+			//OutputStream outToServer = socket.getOutputStream();
+			out = new DataOutputStream(socket.getOutputStream());
+	        out.writeUTF("list");
 	        out.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-        
+		} 
 	}
 	
 	public void close(){
@@ -71,9 +75,9 @@ public class Client extends Thread {
 	        if (in != null)  		in.close();
 	        if (out    != null)  	out.close();
 	        if (socket   != null)  	socket.close();
-  	  } catch (IOException e) {
+  	  	} catch (IOException e) {
   		  e.printStackTrace();
-  	  }
+  	  	}
 	}
 	
 	public int getClientPort(){
