@@ -10,6 +10,7 @@ public class Server extends Thread {
    private static ArrayList<Socket> clients;
    private boolean listenForConnections;
    private boolean listenToClients;
+   private static Thread clientListen;
    private DataInputStream  in   = null;
    private DataOutputStream out = null;
    
@@ -34,33 +35,7 @@ public class Server extends Thread {
    }
 
    public void run() {
-//	   Thread clientListen = new Thread() {
-// 		    public void run() {
-// 		      while(true) {
-// 		    	for(int i = 0; i < clients.size(); i++){
-// 					try {
-// 						// Checks if current client sent a command
-// 						if (clients.get(i).getInputStream().available() != 0){
-// 							DataInputStream in = new DataInputStream(clients.get(i).getInputStream());
-// 							String input = in.readUTF();
-// 							String[] args = input.split(" ");
-// 							if (args[0].equals("list")){
-// 						        sendClientsListToClient(i);
-// 							}
-// 							if (args[0].equals("send")){
-// 								int toID = Integer.parseInt(args[1]);
-// 								String msg = args[2];
-// 						        sendMsgToClient(i, toID, msg);
-// 							}
-// 						} 
-// 					} catch (IOException e) {
-// 						e.printStackTrace();
-// 					}
-// 	    		 }
-// 		      }
-// 		    }
-//   	  };
-//   	  clientListen.start();
+	   
    	  
       while(true) {
     	  
@@ -80,10 +55,10 @@ public class Server extends Thread {
 					System.out.println(in.readUTF());
 					out = new DataOutputStream(clientSocket.getOutputStream());
 					out.writeUTF("Thank you for connecting to " + clientSocket.getLocalSocketAddress());
-					if (clients.size() > 1) {
-						listenForConnections = false;
-						listenToClients = true;
-					}
+//					if (clients.size() > 1) {
+//						listenForConnections = false;
+//						listenToClients = true;
+//					}
 					
 				} catch (SocketTimeoutException s) {
 					System.out.println("Socket timed out!");
@@ -98,7 +73,35 @@ public class Server extends Thread {
 				} 
     	 }
     	 
-    	 
+    	 clientListen = new Thread() {
+  		    public void run() {
+  		      System.out.println("run thread");
+  		      while(true) {
+  		    	for(int i = 0; i < clients.size(); i++){
+  					try {
+  						// Checks if current client sent a command
+  						if (clients.get(i).getInputStream().available() != 0){
+  							DataInputStream in = new DataInputStream(clients.get(i).getInputStream());
+  							String input = in.readUTF();
+  							String[] args = input.split(" ");
+  							if (args[0].equals("list")){
+  						        sendClientsListToClient(i);
+  							}
+  							if (args[0].equals("send")){
+  								int toID = Integer.parseInt(args[1]);
+  								String msg = args[2];
+  								
+  						        sendMsgToClient(i, toID, msg);
+  							}
+  						} 
+  					} catch (IOException e) {
+  						e.printStackTrace();
+  					}
+  	    		 }
+  		      }
+  		    }
+    	  };
+    	  clientListen.start();
     	 
     	 if(listenToClients){
     		 for(int i = 0; i < clients.size(); i++){
@@ -177,6 +180,7 @@ public class Server extends Thread {
    
    public static void close() {
 	   try {
+		   
 			for(int i = 0; i < clients.size(); i++) {   
 				clients.get(i).close();
 			}
@@ -208,12 +212,7 @@ public class Server extends Thread {
 	    	  
 	    	  Thread t = new Server(port);
 	    	  t.start();
-	    	  
-//	         Thread listenForConnections = new Server(port);
-//	         
-//	         Thread listenToClientInput = new Server(true);
-//	         listenForConnections.start();
-//	         listenToClientInput.start();
+
 	      }catch(IOException e) {
 	         e.printStackTrace();
 	      }

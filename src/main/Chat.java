@@ -19,6 +19,7 @@ public class Chat {
 	      do {
 			input = in.nextLine();
 			command(input);
+			
 	      } while(!input.equals("8"));
 	      
 	      
@@ -26,6 +27,7 @@ public class Chat {
 	
 	public static void command(String command){
 		String[] args = command.split(" ");
+		
 		switch (args[0]) {
         case "help":  help();
                  break;
@@ -55,7 +57,12 @@ public class Chat {
                  break;
         case "terminate": 
                  break;
-        case "send": client.speakToServer(args);
+        case "send": 
+        	if (args[2].length() > 100) {
+				System.out.println("Your message is more than 100 characters!");
+			} else {
+				client.speakToServer(args);
+			}
                  break;
         case "exit":  exit();
                  break;
@@ -95,7 +102,7 @@ public class Chat {
 	}
 	
 	public static void exit(){
-		client.close();
+		if (client   != null)  	client.close();
 		System.exit(0);
 	}
 	

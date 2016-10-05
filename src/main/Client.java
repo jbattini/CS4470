@@ -53,7 +53,6 @@ public class Client extends Thread {
 	         }
 	         catch(IOException ioe)
 	         {  System.out.println("Listening error: " + ioe.getMessage());
-	         	stop();
 	            close();
 	         }
 	      }
@@ -66,14 +65,10 @@ public class Client extends Thread {
 			cmd += args[i] +" ";
 		}
 		try {
-			if (args[2].length() > 100) {
-				System.out.println("Your message is more than 100 characters!");
-			} else {
-				// write command to the server
-				out = new DataOutputStream(socket.getOutputStream());
-				out.writeUTF(cmd);
-				out.flush();
-			}
+			// write command to the server
+			out = new DataOutputStream(socket.getOutputStream());
+			out.writeUTF(cmd);
+			out.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} 
@@ -84,7 +79,6 @@ public class Client extends Thread {
 	        if (in != null)  		in.close();	
 	        if (out    != null)  	out.close();
 	        if (socket   != null)  	socket.close();
-	        stop();
   	  	} catch (IOException e) {
   		  e.printStackTrace();
   	  	}
