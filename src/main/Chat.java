@@ -17,10 +17,8 @@ public class Chat {
 			
 	      String input;
 	      do {
-	    	System.out.print(">>");
 			input = in.nextLine();
 			command(input);
-			
 	      } while(!input.equals("8"));
 	      
 	      
@@ -53,12 +51,11 @@ public class Chat {
 				e.printStackTrace();
 			}
             break;
-        case "list":  
-        	client.speakToServer();
+        case "list": client.speakToServer(args);
                  break;
-        case "6":  ;
+        case "terminate": 
                  break;
-        case "7":  ;
+        case "send": client.speakToServer(args);
                  break;
         case "exit":  exit();
                  break;

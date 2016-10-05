@@ -34,12 +34,12 @@ public class Client extends Thread {
 	         in = new DataInputStream(inFromServer);
 	         
 	         System.out.println("Server says " + in.readUTF());
-
-	      }catch(IOException e) {
+	         start();
+	      } catch(IOException e) {
 	         e.printStackTrace();
 	      } 
 		
-		start();
+		
 		
 	}
 	
@@ -49,22 +49,31 @@ public class Client extends Thread {
 		   try {  
 			   InputStream inFromServer = socket.getInputStream();
 		       in = new DataInputStream(inFromServer);
-		       System.out.println("Server says " + in.readUTF());
+		       System.out.println(in.readUTF());
 	         }
 	         catch(IOException ioe)
 	         {  System.out.println("Listening error: " + ioe.getMessage());
+	         	stop();
 	            close();
 	         }
 	      }
 	}
 	
-	public void speakToServer(){
+	public void speakToServer(String[] args){
+		// appends the String array (args) together to create one command string (cmd) to send to the server
+		String cmd = "";
+		for(int i = 0; i < args.length; i++){
+			cmd += args[i] +" ";
+		}
 		try {
-			System.out.println("CLIENT SPEAK TO SERVER");
-			//OutputStream outToServer = socket.getOutputStream();
-			out = new DataOutputStream(socket.getOutputStream());
-	        out.writeUTF("list");
-	        out.flush();
+			if (args[2].length() > 100) {
+				System.out.println("Your message is more than 100 characters!");
+			} else {
+				// write command to the server
+				out = new DataOutputStream(socket.getOutputStream());
+				out.writeUTF(cmd);
+				out.flush();
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		} 
@@ -72,9 +81,10 @@ public class Client extends Thread {
 	
 	public void close(){
 		try {
-	        if (in != null)  		in.close();
+	        if (in != null)  		in.close();	
 	        if (out    != null)  	out.close();
 	        if (socket   != null)  	socket.close();
+	        stop();
   	  	} catch (IOException e) {
   		  e.printStackTrace();
   	  	}
@@ -82,7 +92,6 @@ public class Client extends Thread {
 	
 	public int getClientPort(){
 		return socket.getLocalPort();
-	
 	}
 
 
