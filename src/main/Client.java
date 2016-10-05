@@ -65,7 +65,11 @@ public class Client extends Thread {
 	         }
 	         catch(IOException ioe)
 	         {  System.out.println("Listening error: " + ioe.getMessage());
-	            close();
+	            try {
+					socket.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 	         }
 	      }
 	}
