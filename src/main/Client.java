@@ -23,7 +23,7 @@ public class Client extends Thread {
 	         System.out.println("Connecting to " + destination + " on port " + port);
 	         socket = new Socket(destination, port, this.localAddress, localPort);
 	         
-	         System.out.println("Just connected to " + socket.getRemoteSocketAddress());
+	         System.out.println("Socket created " + socket.getRemoteSocketAddress());
 	         
 	         OutputStream outToServer = socket.getOutputStream();
 	         out = new DataOutputStream(outToServer);
@@ -35,10 +35,22 @@ public class Client extends Thread {
 	         
 	         System.out.println("Server says " + in.readUTF());
 	         start();
-	      } catch(IOException e) {
-	         e.printStackTrace();
+	      } catch(UnknownHostException uhe) {
+	    	 System.out.println("Host address doesn't exist!");
+		     //uhe.printStackTrace();
+		  } catch(BindException be) {
+			 System.out.println("Socket is already in use!");
+		     //be.printStackTrace();
+		  } catch(ConnectException ce) {
+			  System.out.println("Host port doesn't exist or duplicate connection");
+		      //ce.printStackTrace();
+		  } catch(SocketException se) {
+			  System.out.println("Cannot connect to self-connection!");
+		         //e.printStackTrace();
+		  } catch(IOException e) {
+			  System.out.println("IO Exception has occured!");
+	         //e.printStackTrace();
 	      } 
-		
 		
 		
 	}
@@ -53,7 +65,6 @@ public class Client extends Thread {
 	         }
 	         catch(IOException ioe)
 	         {  System.out.println("Listening error: " + ioe.getMessage());
-	         	stop();
 	            close();
 	         }
 	      }
@@ -66,14 +77,10 @@ public class Client extends Thread {
 			cmd += args[i] +" ";
 		}
 		try {
-			if (args[2].length() > 100) {
-				System.out.println("Your message is more than 100 characters!");
-			} else {
-				// write command to the server
-				out = new DataOutputStream(socket.getOutputStream());
-				out.writeUTF(cmd);
-				out.flush();
-			}
+			// write command to the server
+			out = new DataOutputStream(socket.getOutputStream());
+			out.writeUTF(cmd);
+			out.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} 
@@ -84,7 +91,6 @@ public class Client extends Thread {
 	        if (in != null)  		in.close();	
 	        if (out    != null)  	out.close();
 	        if (socket   != null)  	socket.close();
-	        stop();
   	  	} catch (IOException e) {
   		  e.printStackTrace();
   	  	}

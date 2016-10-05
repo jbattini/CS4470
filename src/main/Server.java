@@ -10,8 +10,10 @@ public class Server extends Thread {
    private static ArrayList<Socket> clients;
    private boolean listenForConnections;
    private boolean listenToClients;
+   private static Thread clientListen;
    private DataInputStream  in   = null;
    private DataOutputStream out = null;
+   private static Scanner inScan;
    
    public Server(int port) throws IOException {
       serverSocket = new ServerSocket(port);
@@ -19,52 +21,10 @@ public class Server extends Thread {
       this.listenForConnections = true;
       this.listenToClients = false;
       
-      //serverSocket.setSoTimeout(100);
-      
-   }
-   
-   public Server(boolean listenToClients) throws IOException {
-	      //serverSocket = new ServerSocket(port);
-	      //clients = new ArrayList<Socket>();
-	      this.listenForConnections = false;
-	      this.listenToClients = listenToClients;
-	      System.out.println("serversocketexists: "+serverSocket);
-	      
-	      
    }
 
    public void run() {
-//	   Thread clientListen = new Thread() {
-// 		    public void run() {
-// 		      while(true) {
-// 		    	for(int i = 0; i < clients.size(); i++){
-// 					try {
-// 						// Checks if current client sent a command
-// 						if (clients.get(i).getInputStream().available() != 0){
-// 							DataInputStream in = new DataInputStream(clients.get(i).getInputStream());
-// 							String input = in.readUTF();
-// 							String[] args = input.split(" ");
-// 							if (args[0].equals("list")){
-// 						        sendClientsListToClient(i);
-// 							}
-// 							if (args[0].equals("send")){
-// 								int toID = Integer.parseInt(args[1]);
-// 								String msg = args[2];
-// 						        sendMsgToClient(i, toID, msg);
-// 							}
-// 						} 
-// 					} catch (IOException e) {
-// 						e.printStackTrace();
-// 					}
-// 	    		 }
-// 		      }
-// 		    }
-//   	  };
-//   	  clientListen.start();
-   	  
       while(true) {
-    	  
-    	  
     	 if (listenForConnections){
 				try {
 					
@@ -80,47 +40,68 @@ public class Server extends Thread {
 					System.out.println(in.readUTF());
 					out = new DataOutputStream(clientSocket.getOutputStream());
 					out.writeUTF("Thank you for connecting to " + clientSocket.getLocalSocketAddress());
-					if (clients.size() > 1) {
-						listenForConnections = false;
-						listenToClients = true;
-					}
+
 					
 				} catch (SocketTimeoutException s) {
 					System.out.println("Socket timed out!");
-					break;
+					//break;
 				} catch (SocketException se) {
 					System.out.println("Server Socket Closed");
-					se.printStackTrace();
-					break;
+					//se.printStackTrace();
+					//break;
 				} catch (IOException e) {
-					e.printStackTrace();
-					break;
+					//e.printStackTrace();
+					//break;
 				} 
     	 }
     	 
-    	 
+    	 clientListen = new Thread() {
+  		    public void run() {
+  		      while(true) {
+  		    	for(int i = 0; i < clients.size(); i++){
+  					try {
+  						// Checks if current client sent a command
+  						if (clients.get(i).getInputStream().available() != 0){
+  							DataInputStream in = new DataInputStream(clients.get(i).getInputStream());
+  							String input = in.readUTF();
+  							String[] args = input.split(" ");
+  							if (args[0].equals("list")){
+  						        sendClientsListToClient(i);
+  							}
+  							if (args[0].equals("send")){
+  								int toID = Integer.parseInt(args[1]);
+  								String msg = "";
+  								
+  								if (args.length > 2) {
+  									for(int j = 2; j < args.length; j++){
+  										if (j == args.length-1){
+  	  										msg += args[j];
+  										} else {
+  	  										msg += args[j] + " ";
+  										}
+  									}
+  								}
+  								
+  						        sendMsgToClient(i, toID, msg);
+  							}
+  						} 
+  					} catch (SocketException se) {
+  						System.out.println("Socket Closed");
+  						//se.printStackTrace();
+  					} catch (EOFException e) {
+  						//e.printStackTrace();
+  					} catch (IOException e) {
+  						//e.printStackTrace();
+  					}
+  					
+  					
+  	    		 }
+  		      }
+  		    }
+    	  };
+    	  clientListen.start();
     	 
     	 if(listenToClients){
-    		 for(int i = 0; i < clients.size(); i++){
-				try {
-					// Checks if current client sent a command
-					if (clients.get(i).getInputStream().available() != 0){
-						DataInputStream in = new DataInputStream(clients.get(i).getInputStream());
-						String input = in.readUTF();
-						String[] args = input.split(" ");
-						if (args[0].equals("list")){
-					        sendClientsListToClient(i);
-						}
-						if (args[0].equals("send")){
-							int toID = Integer.parseInt(args[1]);
-							String msg = args[2];
-					        sendMsgToClient(i, toID, msg);
-						}
-					} 
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-    		 } 
     	 }
       }
    }
@@ -162,7 +143,7 @@ public class Server extends Thread {
    }
    
    private void sendMsgToClient(int fromID, int toID, String msg){
-	   	System.out.println("Sending client id:"+toID+" a message from "+fromID);
+	   	System.out.println("Sending to <"+toID+"> a message from <"+fromID+">");
 		try {
 			out = new DataOutputStream(clients.get(toID).getOutputStream());
 			out.writeUTF("Message received from "+clients.get(fromID).getInetAddress().getHostAddress());
@@ -170,7 +151,14 @@ public class Server extends Thread {
 			out.writeUTF("Message: '"+msg+"'");
 			out.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println("IO Exception has occured when sending a message!");
+		}
+		try {
+			out = new DataOutputStream(clients.get(fromID).getOutputStream());
+			out.writeUTF("Message sent to "+toID);
+			out.flush();
+		} catch (IOException e) {
+			System.out.println("IO Exception has occured when sending a message!");
 		}
 		
   }
@@ -183,7 +171,7 @@ public class Server extends Thread {
 			serverSocket.close();
 			System.exit(0);
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println("IO Exception has occured when closing!");
 		}
 		
    }
@@ -208,19 +196,14 @@ public class Server extends Thread {
 	    	  
 	    	  Thread t = new Server(port);
 	    	  t.start();
-	    	  
-//	         Thread listenForConnections = new Server(port);
-//	         
-//	         Thread listenToClientInput = new Server(true);
-//	         listenForConnections.start();
-//	         listenToClientInput.start();
+
 	      }catch(IOException e) {
 	         e.printStackTrace();
 	      }
-	      Scanner in = new Scanner(System.in);
+	      inScan = new Scanner(System.in);
 	      String input;
 	      do {
-			input = in.nextLine();
+			input = inScan.nextLine();
 			command(input);
 	      } while(!input.equals("close"));
    }
